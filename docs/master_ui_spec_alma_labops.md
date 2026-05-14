@@ -1,0 +1,1387 @@
+# MASTER_UI_SPEC.md
+# ALMA LabOps — Master UI/UX Specification
+
+## Operational Intelligence for Research Labs
+
+---
+
+# 1. Product Design Vision
+
+ALMA LabOps should feel like:
+
+- a modern biotech operations platform
+- operationally trustworthy
+- highly structured and efficient
+- intelligent but not overwhelming
+- scalable and enterprise-ready
+- clean, calm, and workflow-focused
+
+The application should visually communicate:
+
+```text
+clarity
+traceability
+organization
+professionalism
+operational confidence
+```
+
+The product should NOT feel like:
+
+```text
+consumer social media app
+futuristic sci-fi dashboard
+experimental AI toy
+chatbot-first application
+cyberpunk AI interface
+```
+
+The platform should feel:
+
+```text
+operational
+focused
+practical
+intelligent
+trustworthy
+```
+
+---
+
+# 2. UI Philosophy
+
+The UI philosophy should prioritize:
+
+```text
+Operational clarity over visual complexity
+```
+
+Every screen should answer:
+
+```text
+What needs attention?
+What action should the user take?
+What information is operationally important?
+```
+
+AI should feel:
+
+```text
+embedded
+assistive
+workflow-aware
+```
+
+NOT:
+
+```text
+autonomous
+mysterious
+chaotic
+```
+
+The AI should feel like:
+
+```text
+an operational copilot
+```
+
+rather than:
+
+```text
+a standalone chatbot product
+```
+
+---
+
+# 3. Visual Identity
+
+## Overall Aesthetic
+
+Design inspiration:
+
+```text
+Linear
+Notion
+Airtable
+Modern biotech SaaS
+Enterprise operational software
+```
+
+The visual style should feel:
+
+```text
+minimal
+clean
+structured
+calm
+professional
+```
+
+---
+
+## Color Palette
+
+### Background Colors
+
+```text
+Primary Background: white
+Secondary Background: slate-50
+Sidebar Background: slate-900
+Card Background: white
+```
+
+### Accent Colors
+
+```text
+Primary Accent: teal-600 or blue-600
+Success: emerald-500
+Warning: amber-500
+Error: red-500
+Info: sky-500
+```
+
+### Status Philosophy
+
+Colors should communicate:
+
+```text
+operational state
+```
+
+NOT:
+
+```text
+decorative aesthetics
+```
+
+---
+
+## Typography
+
+Use:
+
+```text
+Inter
+```
+
+Typography style:
+
+```text
+clean
+minimal
+high readability
+professional
+```
+
+Recommended hierarchy:
+
+```text
+Page Titles → bold, large
+Section Headers → semibold
+Operational Labels → medium
+Metadata → muted small text
+```
+
+---
+
+## Corners & Shadows
+
+### Corner Radius
+
+```text
+rounded-xl
+rounded-2xl for large cards/modals
+```
+
+### Shadows
+
+```text
+soft subtle shadows only
+```
+
+Avoid:
+
+```text
+heavy glow effects
+heavy neumorphism
+strong glassmorphism
+```
+
+---
+
+# 4. Design System
+
+## Core Components
+
+Use:
+
+```text
+Cards
+Tables
+Badges
+Drawers
+Tabs
+Dialogs
+Dropdowns
+Toasts
+Skeleton loaders
+```
+
+---
+
+## Design Principles
+
+The UI should prioritize:
+
+```text
+scanability
+workflow efficiency
+clarity
+operational density without clutter
+```
+
+Tables should prioritize:
+
+```text
+fast scanning
+status visibility
+minimal cognitive load
+```
+
+Cards should feel:
+
+```text
+structured and information-rich
+```
+
+NOT:
+
+```text
+over-designed
+visually noisy
+```
+
+---
+
+# 5. Global Layout System
+
+## Application Layout
+
+```text
+Fixed left sidebar
+Sticky top navigation
+Scrollable content area
+Floating AI copilot button
+Right-side detail drawers
+```
+
+The layout should feel:
+
+```text
+stable and predictable
+```
+
+---
+
+## Sidebar Navigation
+
+Primary navigation:
+
+```text
+Dashboard
+Inventory
+Purchase Requests
+Tasks
+Incoming Packages
+Knowledge Base
+Audit Logs
+Settings
+```
+
+Sidebar style:
+
+```text
+Dark background
+Minimal icons
+Compact spacing
+Clear active state
+```
+
+Avoid:
+
+```text
+complex nested navigation
+```
+
+---
+
+## Top Navigation Bar
+
+Include:
+
+```text
+Global search
+Current user role badge
+Notification icon
+Profile avatar
+```
+
+Search placeholder:
+
+```text
+Search inventory, requests, tasks...
+```
+
+---
+
+# 6. AI Copilot Experience
+
+## Floating AI Copilot
+
+Bottom-right floating button:
+
+```text
+Ask ALMA AI
+```
+
+Clicking opens:
+
+```text
+Right-side AI drawer
+```
+
+---
+
+## AI Drawer Layout
+
+Should include:
+
+```text
+Suggested prompts
+Chat history
+Input box
+Referenced sources
+Suggested actions
+```
+
+---
+
+## AI UX Philosophy
+
+The AI should feel:
+
+```text
+embedded into workflows
+```
+
+NOT:
+
+```text
+a separate AI product
+```
+
+Avoid:
+
+```text
+full-screen chatbot-first layouts
+```
+
+---
+
+# 7. Login & Authentication UX
+
+## MVP Login Strategy
+
+Use:
+
+```text
+Seeded demo users
+```
+
+Buttons:
+
+```text
+Login as PI
+Login as Researcher
+Login as Operations Researcher
+Login as Student
+```
+
+---
+
+## Future Enterprise Login UX
+
+Include disabled button:
+
+```text
+Continue with Organization Email
+Coming soon
+```
+
+This communicates:
+
+```text
+future SSO capability
+```
+
+without implementing it in MVP.
+
+---
+
+# 8. Dashboard
+
+## Dashboard Purpose
+
+The dashboard should answer:
+
+```text
+What needs attention today?
+```
+
+The dashboard is:
+
+```text
+an operational command center
+```
+
+NOT:
+
+```text
+a generic analytics dashboard
+```
+
+---
+
+## Dashboard Sections
+
+### KPI Cards
+
+```text
+Pending Requests
+Low Stock Items
+Open Tasks
+Incoming Packages
+```
+
+---
+
+### AI Daily Summary
+
+Role-aware operational summary generated by AI.
+
+Examples:
+
+```text
+3 low-stock items require review
+2 purchase requests pending approval
+4 unpacking tasks assigned today
+```
+
+---
+
+### Recent Activity Feed
+
+Chronological operational activity:
+
+```text
+Inventory updated
+Package verified
+Purchase approved
+Task completed
+```
+
+---
+
+### Action Queue
+
+Changes based on role.
+
+Examples:
+
+```text
+PI → approvals
+Researcher → assigned operational tasks
+Student → onboarding/tasks
+```
+
+---
+
+# 9. Inventory Page
+
+## Design Goal
+
+Fast operational visibility.
+
+Users should immediately understand:
+
+```text
+what exists
+where it is
+how much remains
+whether action is required
+```
+
+---
+
+## Layout
+
+```text
+Header
+Search/filter row
+Status tabs
+Inventory table
+Item detail drawer
+```
+
+---
+
+## Inventory Table Columns
+
+```text
+Item Name
+Category
+Quantity
+Location
+Status
+Threshold
+Last Updated
+Actions
+```
+
+---
+
+## Item Detail Drawer
+
+Should contain:
+
+```text
+Item metadata
+Quantity history
+Threshold info
+AI insights
+Related tasks
+Action buttons
+```
+
+---
+
+## Low Stock UX
+
+Low-stock items should visually stand out.
+
+Recommended:
+
+```text
+Warning badge
+Colored row accent
+AI recommendation card
+```
+
+---
+
+# 10. Purchase Requests Page
+
+## Design Goal
+
+Centralize procurement workflows.
+
+The page should reduce:
+
+```text
+email chaos
+duplicate purchases
+approval confusion
+```
+
+---
+
+## Layout
+
+```text
+Request table
+Status tabs
+AI insight badges
+Approval drawer
+```
+
+---
+
+## AI Insight Flags
+
+Examples:
+
+```text
+Duplicate Request
+Item Already In Stock
+Vendor Warning
+Low Priority
+```
+
+These should:
+
+```text
+stand out visually
+```
+
+without overwhelming the interface.
+
+---
+
+## Approval Actions
+
+```text
+Approve
+Reject
+Request Clarification
+```
+
+Approval controls should be:
+
+```text
+PI-only visible
+```
+
+---
+
+# 11. Tasks Page
+
+## Design Goal
+
+Lightweight operational coordination.
+
+The page should feel:
+
+```text
+simple
+fast
+operational
+```
+
+NOT:
+
+```text
+complex project management software
+```
+
+---
+
+## Layout Style
+
+```text
+Kanban board
+```
+
+Columns:
+
+```text
+To Do
+In Progress
+Blocked
+Completed
+```
+
+---
+
+## Task Cards
+
+Each task card should show:
+
+```text
+Title
+Assigned user
+Priority
+Due date
+AI-generated badge
+```
+
+---
+
+# 12. Incoming Packages Page
+
+## Design Goal
+
+AI-assisted package intake.
+
+This should be:
+
+```text
+The MVP signature feature
+```
+
+---
+
+## Workflow
+
+```text
+Upload package image
+ ↓
+AI extracts metadata
+ ↓
+User reviews extraction
+ ↓
+Inventory draft created
+ ↓
+Unpacking task generated
+```
+
+---
+
+## Layout
+
+```text
+Package grid/table
+Image thumbnails
+Extraction status
+Package detail drawer
+```
+
+---
+
+## Upload Modal
+
+Should support:
+
+```text
+Drag/drop upload
+Image preview
+Run AI extraction
+Editable extracted fields
+```
+
+---
+
+## AI Extraction UX
+
+AI-generated fields should:
+
+```text
+appear editable before confirmation
+```
+
+This reinforces:
+
+```text
+human oversight
+```
+
+---
+
+# 13. Knowledge Base
+
+## Design Goal
+
+Institutional memory + onboarding assistant.
+
+This page should help:
+
+```text
+new students
+new researchers
+lab onboarding
+SOP retrieval
+```
+
+---
+
+## Layout
+
+```text
+Left: document list
+Center: document viewer
+Right/bottom: AI assistant
+```
+
+---
+
+## Supported Document Types
+
+```text
+SOP
+Onboarding
+Safety
+Equipment
+Policy
+```
+
+---
+
+## AI Response Requirements
+
+AI responses must:
+
+```text
+be grounded
+include references
+avoid hallucination-style behavior
+```
+
+---
+
+# 14. Audit Logs
+
+## Design Goal
+
+Trust and traceability.
+
+The audit page should communicate:
+
+```text
+accountability
+operational history
+system transparency
+```
+
+---
+
+## Layout
+
+```text
+Chronological searchable table
+Detail drawer
+AI summaries
+```
+
+---
+
+## Visual Style
+
+Audit logs should feel:
+
+```text
+structured
+factual
+reliable
+```
+
+NOT:
+
+```text
+technical debugging console
+```
+
+---
+
+# 15. Settings
+
+## Design Goal
+
+Administrative clarity.
+
+The settings experience should feel:
+
+```text
+controlled
+safe
+organized
+```
+
+---
+
+## Layout
+
+```text
+Left-side settings navigation
+Main configuration panel
+Permission drawers
+```
+
+---
+
+## Settings Sections
+
+```text
+Users
+Vendors
+Locations
+Categories
+Lab Info
+Permissions
+```
+
+---
+
+## Permissions UX
+
+Sensitive permissions should show:
+
+```text
+warning indicators
+```
+
+Examples:
+
+```text
+Approve Purchases
+Manage Users
+Assign Permissions
+```
+
+---
+
+# 16. Role-Based UX
+
+## Role Philosophy
+
+Roles should primarily control:
+
+```text
+visibility
+approval authority
+operational scope
+sensitive information access
+```
+
+The UI should:
+
+```text
+hide irrelevant workflows
+reduce cognitive load
+prevent unauthorized actions
+```
+
+Permissions should be enforced:
+
+```text
+both in frontend and backend
+```
+
+---
+
+# PI Experience
+
+## PI Responsibilities
+
+The PI acts as:
+
+```text
+Operational authority
+Budget owner
+Approval authority
+Lab oversight role
+```
+
+---
+
+## PI Dashboard Visibility
+
+PI should see:
+
+```text
+Pending purchase approvals
+Critical low-stock alerts
+Lab operational summaries
+Financial summaries
+Recent operational activity
+AI-generated operational insights
+```
+
+---
+
+## PI Inventory Permissions
+
+PI can:
+
+```text
+View all inventory
+Create inventory items
+Edit inventory items
+Delete inventory items
+Adjust thresholds
+View inventory history
+View all storage locations
+```
+
+---
+
+## PI Procurement Permissions
+
+PI can:
+
+```text
+View all purchase requests
+Approve purchase requests
+Reject purchase requests
+Request clarification
+View vendor information
+View procurement history
+View AI duplicate warnings
+```
+
+---
+
+## PI User & Permission Controls
+
+PI can:
+
+```text
+Invite users
+Deactivate users
+Assign permissions
+Grant operational/admin permissions
+Manage role capabilities
+```
+
+---
+
+## PI Financial Visibility
+
+PI can:
+
+```text
+View estimated purchase totals
+View vendor pricing
+View operational procurement summaries
+View budget-related insights
+```
+
+---
+
+## PI Knowledge Base Permissions
+
+PI can:
+
+```text
+Upload SOPs
+Delete documents
+Manage onboarding content
+Manage lab policies
+```
+
+---
+
+# Researcher Experience
+
+## Researcher Responsibilities
+
+Researchers act as:
+
+```text
+Primary operational users
+Inventory maintainers
+Procurement requestors
+Task coordinators
+```
+
+Researchers should have:
+
+```text
+high operational visibility
+```
+
+but:
+
+```text
+limited administrative authority
+```
+
+unless explicitly granted permissions.
+
+---
+
+## Researcher Dashboard Visibility
+
+Researchers should see:
+
+```text
+Assigned tasks
+Low-stock alerts
+Inventory summaries
+Pending requests they created
+Incoming packages
+Operational activity feed
+AI operational suggestions
+```
+
+---
+
+## Researcher Inventory Permissions
+
+Researchers can:
+
+```text
+View inventory
+Search inventory
+Update quantities
+Create inventory drafts
+Assign locations
+Flag low-stock items
+Create reorder suggestions
+```
+
+Researchers CANNOT by default:
+
+```text
+Delete inventory items
+View sensitive financial summaries
+```
+
+---
+
+## Researcher Procurement Permissions
+
+Researchers can:
+
+```text
+Create purchase requests
+View their requests
+View approval status
+View AI duplicate warnings
+Request vendor quotations
+```
+
+Researchers CANNOT by default:
+
+```text
+Approve purchases
+Reject purchases
+View organization-wide financial summaries
+```
+
+---
+
+## Researcher Task Permissions
+
+Researchers can:
+
+```text
+Create tasks
+Assign tasks
+Manage operational workflows
+Update task status
+```
+
+---
+
+## Researcher Knowledge Base Permissions
+
+Researchers can:
+
+```text
+View SOPs
+Search onboarding content
+Use AI assistant
+Upload documents if granted permission
+```
+
+---
+
+## Optional Elevated Researcher Permissions
+
+PI may grant researchers additional permissions such as:
+
+```text
+manage_locations
+manage_vendors
+upload_kb_docs
+assign_permissions
+manage_inventory_categories
+```
+
+This creates:
+
+```text
+Operations Researcher
+```
+
+without introducing a separate Admin role in the MVP.
+
+---
+
+# Student Experience
+
+## Student Responsibilities
+
+Students primarily act as:
+
+```text
+Operational assistants
+Onboarding users
+Limited inventory contributors
+```
+
+The student experience should prioritize:
+
+```text
+simplicity
+clarity
+guided workflows
+```
+
+---
+
+## Student Dashboard Visibility
+
+Students should see:
+
+```text
+Assigned tasks
+Onboarding checklist
+Recent assigned operational tasks
+AI onboarding assistant
+Limited activity feed
+```
+
+---
+
+## Student Inventory Permissions
+
+Students can:
+
+```text
+Search inventory
+View inventory locations
+View inventory quantities
+Suggest quantity updates
+Suggest low-stock alerts
+Assist unpacking workflows
+```
+
+Students CANNOT:
+
+```text
+Delete inventory
+Modify thresholds
+Approve inventory changes
+```
+
+---
+
+## Student Procurement Permissions
+
+Students can:
+
+```text
+Create purchase suggestions
+Suggest reorder requests
+Submit operational requests
+```
+
+These should:
+
+```text
+require researcher or PI review
+```
+
+before becoming official purchase requests.
+
+---
+
+## Student Task Permissions
+
+Students can:
+
+```text
+View assigned tasks
+Update task status
+Mark tasks completed
+Comment on tasks
+```
+
+---
+
+## Student Knowledge Base Permissions
+
+Students can:
+
+```text
+View onboarding docs
+Search SOPs
+Use AI onboarding assistant
+Access safety procedures
+```
+
+---
+
+## Student Restrictions
+
+Students should NOT see:
+
+```text
+Financial summaries
+Permission management
+Vendor management
+Approval workflows
+Sensitive operational settings
+```
+
+---
+
+# 17. Responsive Design
+
+## Priority
+
+Prioritize:
+
+```text
+Desktop UX first
+```
+
+Tablet:
+
+```text
+acceptable support
+```
+
+Mobile:
+
+```text
+basic usability only
+```
+
+---
+
+# 18. Animation & Interaction Style
+
+## Motion Philosophy
+
+Use:
+
+```text
+subtle motion
+soft transitions
+smooth drawer animations
+```
+
+Avoid:
+
+```text
+overly flashy animations
+```
+
+---
+
+## Loading States
+
+Include:
+
+```text
+Skeleton loaders
+Spinner for AI actions
+Upload progress indicators
+```
+
+---
+
+# 19. Explicit UI Constraints
+
+DO NOT:
+
+```text
+Use excessive gradients
+Use heavy glassmorphism
+Use futuristic cyberpunk styling
+Overcrowd dashboards
+Create giant chatbot-first layouts
+```
+
+The product should feel:
+
+```text
+operational
+focused
+enterprise-ready
+trustworthy
+scalable
+```
+

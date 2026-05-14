@@ -1,0 +1,40 @@
+# Environment variables — never commit
+.env
+.env.local
+.env.*.local
+
+# ─── Frontend ─────────────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.vercel/
+frontend/coverage/
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+frontend/*.pem
+
+# ─── Backend ──────────────────────────────────────────────────────────────────
+backend/.venv/
+backend/**/__pycache__/
+backend/**/*.py[oc]
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/dist/
+backend/build/
+backend/wheels/
+backend/**/*.egg-info
+backend/.ruff_cache/
+backend/.mypy_cache/
+
+# ─── OS / Editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo

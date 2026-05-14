@@ -1,4 +1,6 @@
 # Environment variables — never commit
+backend/.env
+frontend/.env.local
 .env
 .env.local
 .env.*.local

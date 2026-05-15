@@ -78,7 +78,7 @@ Delegatable permissions (PI can grant to researchers via Settings → Team):
 | Auth | Supabase Auth (JWT) |
 | Storage | Supabase Storage |
 | AI | OpenAI SDK (GPT-4.1-mini, GPT-4o Vision, text-embedding-3-small) |
-| Deployment | Vercel (frontend) + Render/Railway (backend) |
+| Deployment | Vercel (frontend) + Render (backend) |
 
 ---
 
@@ -162,22 +162,45 @@ Requires `OPENAI_API_KEY` in `backend/.env`. Exit code 1 on any failure.
 
 ---
 
+## Hosted Demo / Deployment
+
+### Frontend (Vercel)
+
+[https://alma-labops.vercel.app/login](https://alma-labops.vercel.app/login)
+
+### Backend API (Render)
+
+[https://alma-labops.onrender.com/health](https://alma-labops.onrender.com/health)
+
+---
+
+## Deployment Architecture
+
+ALMA LabOps is deployed using:
+
+- Vercel (Next.js frontend)
+- Render (FastAPI backend)
+- Supabase (database, authentication, storage, pgvector)
+
+This stack was selected for the MVP phase for rapid iteration, low operational overhead, and managed infrastructure. It is suitable for MVP testing, academic demonstrations, and small-scale laboratory pilots.
+
+---
+
+## Future Enterprise Deployment Considerations
+
+The platform architecture is intentionally modular and portable. If required by institutional IT policy, the system could be migrated to enterprise infrastructure such as Microsoft Azure, AWS, or a private cloud.
+
+---
+
+## Important Notes for Testers
+
+- The Render backend runs on the free tier and may take 30–60 seconds to wake after inactivity.
+- AI-assisted features use OpenAI API credits. Please use AI-powered actions conservatively during testing.
+
+    AI-powered features: Vision AI package extraction, Knowledge Base assistant, Operational AI copilot, and AI evaluation scripts.
+
+    The platform uses constrained, human-supervised AI workflows focused on operational laboratory use cases.
+
 ## Demo Video
 
-Google Drive Demo Walkthrough:
-
-https://drive.google.com/file/d/1SHe1bPswaNMbcMZKSGPnd3OMI8VafA2a/view?usp=sharing
-
-The demo showcases:
-
-- RBAC workflows
-
-- inventory management
-
-- package intake with Vision AI
-
-- constrained RAG assistant
-
-- operational AI copilot
-
-- audit logging
+[Google Drive — Demo Walkthrough](https://drive.google.com/file/d/1SHe1bPswaNMbcMZKSGPnd3OMI8VafA2a/view?usp=sharing)

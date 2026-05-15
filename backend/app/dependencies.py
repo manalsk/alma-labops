@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from supabase import Client
@@ -5,6 +7,8 @@ from supabase import Client
 from app.db.supabase import get_supabase_client
 from app.middleware.rbac import require_permission as check_permission
 from app.models.auth import CurrentUser
+
+logger = logging.getLogger(__name__)
 
 bearer = HTTPBearer()
 
@@ -28,7 +32,7 @@ async def get_current_user(
 
         profile_resp = (
             db.table("profiles")
-            .select("*, user_permissions(permission_name)")
+            .select("*, user_permissions!user_permissions_user_id_fkey(permission_name)")
             .eq("id", user_id)
             .single()
             .execute()
@@ -66,6 +70,7 @@ async def get_current_user(
     except HTTPException:
         raise
     except Exception as exc:
+        logger.error("Authentication error: %s: %s", type(exc).__name__, exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed",

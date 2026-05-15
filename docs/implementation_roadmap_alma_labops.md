@@ -206,7 +206,94 @@ Endpoints available at `GET /api/v1/audit-logs/` and `GET /api/v1/audit-logs/ai`
 
 ---
 
-## Phase 3 — Inventory Management
+## Phase 3 — Inventory Management ✅
+
+### What was built
+
+A full inventory management workflow — searchable table, detail drawer, CRUD operations, quantity tracking, low-stock alerting, role-aware actions, and a complete audit trail. All business logic enforced server-side; frontend RBAC only controls visibility.
+
+### Database schema (`supabase/migrations/002_inventory.sql`)
+
+Four new tables:
+
+| Table | Purpose |
+|---|---|
+| `inventory_locations` | Named storage locations (e.g. "-80°C Freezer", "Dry Storage A") |
+| `inventory_categories` | Item categories with optional color labels |
+| `inventory_items` | Core inventory — quantity, unit, threshold, reorder qty, vendor, catalog # |
+| `inventory_activity_logs` | Per-item change history with actor, action type, old/new values |
+
+Status (`in_stock` / `low_stock` / `out_of_stock`) is computed at query time — never stored — based on `quantity` vs `threshold`.
+
+### Demo seed data (`backend/scripts/seed_inventory.py`)
+
+Run after the migration:
+```bash
+cd backend
+uv run python -m scripts.seed_inventory
+```
+
+Seeds 6 locations, 6 categories, and 15 realistic lab items including:
+- Items at full stock (Falcon tubes, PCR plates, gloves)
+- Low-stock items (Pipette Tips 1000μL, Ethanol, Trypsin-EDTA, BSA Standard)
+- Out-of-stock item (1.5mL Microcentrifuge Tubes)
+
+### Backend API (`backend/app/api/v1/inventory/`)
+
+| Method | Endpoint | Permission | Notes |
+|---|---|---|---|
+| `GET` | `/inventory/` | all roles | Returns all items with computed status + joined names |
+| `POST` | `/inventory/` | `manage_inventory` | PI + Researcher |
+| `GET` | `/inventory/locations` | all roles | |
+| `GET` | `/inventory/categories` | all roles | |
+| `GET` | `/inventory/{id}` | all roles | |
+| `PATCH` | `/inventory/{id}` | `manage_inventory` | Updates metadata fields |
+| `PATCH` | `/inventory/{id}/quantity` | `manage_inventory` | Dedicated quantity update with audit trail |
+| `GET` | `/inventory/{id}/activity` | all roles | Last 20 activity entries |
+| `DELETE` | `/inventory/{id}` | PI only | Enforced by role check, not just permission |
+
+### Inventory service (`backend/app/services/inventory/service.py`)
+
+Every mutation:
+1. Performs the DB operation
+2. Writes an `inventory_activity_logs` entry (actor, action, old/new values, notes)
+3. Writes an `audit_logs` entry (for the global audit trail)
+
+### Frontend architecture
+
+**Profile context** — `UserProfileContext` wraps the app shell so any client component can call `useUserProfile()` without prop drilling. Set up in `AppLayout`.
+
+**Data hook** — `useInventory()` fetches items, locations, and categories in parallel on mount. Exposes `createItem`, `updateItem`, `updateQuantity`, `deleteItem`, `fetchActivity` — each calls FastAPI with the Supabase JWT and refreshes state on success.
+
+**Component tree:**
+```
+inventory/page.tsx         ← orchestrates all state + RBAC checks
+  InventoryFilters         ← search + status/category/location dropdowns (client-side filtering)
+  InventoryTable           ← row-per-item, amber left-border for low/out-of-stock
+  InventoryDrawer          ← right Sheet with quantity bar, metadata, activity log
+    StatusBadge            ← colored pill: In Stock / Low Stock / Out of Stock
+  ItemFormDialog           ← create + edit form (quantity only shown on create)
+  QuantityDialog           ← dedicated quantity update with notes field
+```
+
+### Role behavior
+
+| Action | PI | Researcher | Student |
+|---|---|---|---|
+| View & search | ✅ | ✅ | ✅ |
+| Add item | ✅ | ✅ | ✗ |
+| Edit item metadata | ✅ | ✅ | ✗ |
+| Update quantity | ✅ | ✅ | ✗ |
+| Delete item | ✅ | ✗ | ✗ |
+
+Students see the inventory table and drawer (read-only) but no action buttons are rendered.
+
+### Low-stock UX
+
+- Amber left-border accent on affected table rows
+- Warning icon next to item name
+- Alert banner at top of page with count + "Show only" toggle
+- Quantity progress bar in the drawer (red / amber / green based on status)
 
 ---
 

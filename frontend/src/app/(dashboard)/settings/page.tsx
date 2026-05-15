@@ -1,3 +1,5 @@
+import { DevDebugPanel } from '@/components/dev/DevDebugPanel';
+
 export default function SettingsPage() {
   return (
     <div>
@@ -10,6 +12,8 @@ export default function SettingsPage() {
       <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
         <p className="text-slate-400 text-sm">Settings implementation coming in Phase 2</p>
       </div>
+
+      <DevDebugPanel />
     </div>
   );
 }

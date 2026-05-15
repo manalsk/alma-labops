@@ -1,5 +1,6 @@
 import { AppSidebar } from './AppSidebar';
 import { TopNav } from './TopNav';
+import { UserProfileProvider } from '@/contexts/UserProfileContext';
 import type { UserProfile } from '@/types';
 
 interface AppLayoutProps {
@@ -9,12 +10,14 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, profile }: AppLayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <AppSidebar role={profile.role} />
-      <TopNav profile={profile} />
-      <main className="ml-60 pt-14">
-        <div className="p-6 max-w-screen-xl">{children}</div>
-      </main>
-    </div>
+    <UserProfileProvider profile={profile}>
+      <div className="min-h-screen bg-slate-50">
+        <AppSidebar role={profile.role} />
+        <TopNav profile={profile} />
+        <main className="ml-60 pt-14">
+          <div className="p-6 max-w-7xl">{children}</div>
+        </main>
+      </div>
+    </UserProfileProvider>
   );
 }

@@ -34,18 +34,21 @@ export type InventoryStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
 
 export interface InventoryItem {
   id: string;
+  lab_id: string;
   name: string;
-  category: string;
+  category_id: string | null;
+  category_name: string | null;
+  location_id: string | null;
+  location_name: string | null;
   quantity: number;
   unit: string;
-  location_id: string;
-  location_name?: string;
   threshold: number;
+  reorder_quantity: number;
   status: InventoryStatus;
-  vendor?: string;
-  catalog_number?: string;
-  notes?: string;
-  lab_id: string;
+  notes: string | null;
+  vendor: string | null;
+  catalog_number: string | null;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,8 +56,27 @@ export interface InventoryItem {
 export interface InventoryLocation {
   id: string;
   name: string;
-  description?: string;
+  description: string | null;
   lab_id: string;
+}
+
+export interface InventoryCategory {
+  id: string;
+  name: string;
+  color: string | null;
+  lab_id: string;
+}
+
+export interface InventoryActivityLog {
+  id: string;
+  item_id: string;
+  actor_id: string | null;
+  actor_name: string | null;
+  action: 'created' | 'updated' | 'quantity_updated' | 'location_changed' | 'deleted';
+  old_value: Record<string, unknown> | null;
+  new_value: Record<string, unknown> | null;
+  notes: string | null;
+  created_at: string;
 }
 
 // ─── Purchase Requests ────────────────────────────────────────────────────────

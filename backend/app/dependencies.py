@@ -3,6 +3,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from supabase import Client
 
 from app.db.supabase import get_supabase_client
+from app.middleware.rbac import require_permission as check_permission
+from app.models.auth import CurrentUser
 
 bearer = HTTPBearer()
 
@@ -11,29 +13,72 @@ async def get_db() -> Client:
     return get_supabase_client()
 
 
-async def get_current_user_token(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer),
-) -> str:
-    """Extract and return the raw JWT from the Authorization header."""
-    return credentials.credentials
-
-
-async def require_auth(
+async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
     db: Client = Depends(get_db),
-) -> dict:
-    """Validate JWT and return the authenticated user payload."""
+) -> CurrentUser:
+    """Validate the Supabase JWT and return the authenticated user with profile."""
     token = credentials.credentials
     try:
-        response = db.auth.get_user(token)
-        if not response.user:
+        user_response = db.auth.get_user(token)
+        if not user_response.user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+        user_id = str(user_response.user.id)
+
+        profile_resp = (
+            db.table("profiles")
+            .select("*, user_permissions(permission_name)")
+            .eq("id", user_id)
+            .single()
+            .execute()
+        )
+
+        if not profile_resp.data:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token",
+                detail="User profile not found — account may not be set up",
             )
-        return {"user": response.user, "token": token}
+
+        profile = profile_resp.data
+        if not profile.get("is_active"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account is deactivated",
+            )
+
+        extra_permissions = [
+            p["permission_name"] for p in (profile.get("user_permissions") or [])
+        ]
+
+        return CurrentUser(
+            id=user_id,
+            email=user_response.user.email or "",
+            role=profile["role"],
+            lab_id=profile["lab_id"],
+            org_id=profile["org_id"],
+            full_name=profile["full_name"],
+            permissions=extra_permissions,
+            is_active=profile["is_active"],
+            created_at=profile["created_at"],
+        )
+
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            detail="Authentication failed",
         ) from exc
+
+
+def require_permission(permission: str):
+    """FastAPI dependency factory — injects current user and enforces a permission."""
+
+    async def dependency(
+        current_user: CurrentUser = Depends(get_current_user),
+    ) -> CurrentUser:
+        check_permission(current_user.role, permission, current_user.permissions)
+        return current_user
+
+    return Depends(dependency)

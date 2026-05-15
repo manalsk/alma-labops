@@ -1,18 +1,17 @@
 import { AppSidebar } from './AppSidebar';
 import { TopNav } from './TopNav';
-import type { Role } from '@/types';
+import type { UserProfile } from '@/types';
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  userRole?: Role;
-  userName?: string;
+  profile: UserProfile;
 }
 
-export function AppLayout({ children, userRole, userName }: AppLayoutProps) {
+export function AppLayout({ children, profile }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50">
-      <AppSidebar />
-      <TopNav userRole={userRole} userName={userName} />
+      <AppSidebar role={profile.role} />
+      <TopNav profile={profile} />
       <main className="ml-60 pt-14">
         <div className="p-6 max-w-screen-xl">{children}</div>
       </main>

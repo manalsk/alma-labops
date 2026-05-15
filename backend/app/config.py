@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,8 +14,14 @@ class Settings(BaseSettings):
     supabase_anon_key: str
     supabase_service_role_key: str
 
-    allowed_origins: list[str] = ["http://localhost:3000"]
+    # Accepts a comma-separated string or a JSON array in .env
+    # e.g. ALLOWED_ORIGINS=http://localhost:3000,https://myapp.vercel.app
+    allowed_origins: str = "http://localhost:3000"
     environment: str = "development"
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
 
 
 settings = Settings()

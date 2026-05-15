@@ -87,10 +87,13 @@ OPENAI_API_KEY=sk-...
 
 # Supabase — service role key is backend only
 SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 
-# CORS — set to your frontend URL
-CORS_ORIGINS=http://localhost:3000
+# CORS — comma-separated list of allowed frontend origins
+ALLOWED_ORIGINS=http://localhost:3000
+
+ENVIRONMENT=development
 ```
 
 > **Important:** The `SUPABASE_SERVICE_ROLE_KEY` bypasses Row Level Security. It must never appear in any `NEXT_PUBLIC_*` variable or be committed to version control.
@@ -262,4 +265,64 @@ Check that `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `fr
 The backend's OpenAI call failed. Check that `OPENAI_API_KEY` is set in `backend/.env` and is valid. The backend logs the full traceback at the `ERROR` level.
 
 **CORS errors in browser console**
-Ensure `CORS_ORIGINS` in `backend/.env` includes your frontend URL (e.g. `http://localhost:3000`).
+Ensure `ALLOWED_ORIGINS` in `backend/.env` includes your frontend URL (e.g. `http://localhost:3000`). Multiple origins are comma-separated.
+
+---
+
+## 10. Deployment
+
+### Backend — Render
+
+The repo includes a `render.yaml` at the root. Connect the GitHub repo to Render and it will auto-detect the config.
+
+**Render service settings (if configuring manually):**
+
+| Setting | Value |
+|---|---|
+| Runtime | Python |
+| Root directory | `backend` |
+| Build command | `pip install uv && uv sync --no-dev` |
+| Start command | `uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+
+**Environment variables to set in the Render dashboard:**
+
+| Variable | Value |
+|---|---|
+| `PYTHON_VERSION` | `3.12.0` |
+| `ENVIRONMENT` | `production` |
+| `OPENAI_API_KEY` | Your OpenAI API key |
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_ANON_KEY` | Your Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key |
+| `ALLOWED_ORIGINS` | `https://your-app.vercel.app,http://localhost:3000` |
+
+> Set `ALLOWED_ORIGINS` to your Vercel URL once you have it. You can update it in Render after the first Vercel deploy.
+
+---
+
+### Frontend — Vercel
+
+In the Vercel project settings:
+- **Framework preset:** Next.js
+- **Root directory:** `frontend`
+
+**Environment variables to set in the Vercel dashboard:**
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key |
+| `NEXT_PUBLIC_API_URL` | Your Render service URL (e.g. `https://alma-labops-api.onrender.com`) |
+
+> `NEXT_PUBLIC_API_URL` must point to your Render backend. Without it, all API calls fall back to `http://localhost:8000` and will fail in production.
+
+---
+
+### Post-deploy checklist
+
+1. Deploy backend to Render first and copy the service URL (e.g. `https://alma-labops-api.onrender.com`).
+2. Set `NEXT_PUBLIC_API_URL` in Vercel to that URL, then deploy the frontend.
+3. Copy the Vercel URL (e.g. `https://your-app.vercel.app`) and update `ALLOWED_ORIGINS` in Render to include it.
+4. Trigger a redeploy on Render after updating `ALLOWED_ORIGINS`.
+5. Verify: visit `https://alma-labops-api.onrender.com/health` — should return `{"status":"ok"}`.
+6. Run seed scripts against your production Supabase project (see Section 5). Seed scripts read from `backend/.env`, so point that file at your production Supabase project for the seed run.

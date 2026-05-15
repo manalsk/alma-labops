@@ -402,7 +402,182 @@ purchase-requests/page.tsx     ← orchestrates all state + RBAC
 
 ---
 
-## Phase 5 — Tasks + Package Intake + Vision AI
+## Phase 5 — Tasks + Package Intake + Vision AI ✅
+
+### Phase 5A — Task Management
+
+A full Kanban task board with role-aware CRUD, status transitions, priority tracking, overdue detection, assignee management, and activity timelines.
+
+#### Database schema (`supabase/migrations/004_tasks.sql`)
+
+Two new tables:
+
+| Table | Purpose |
+|---|---|
+| `tasks` | Core task — title, description, status, priority, type, assignee, due date, related package id |
+| `task_activity_logs` | Per-task timeline (created, status changes, assignments, etc.) |
+
+Statuses: `todo → in_progress → blocked → completed`. Priorities: `low`, `normal`, `high`, `urgent`.
+
+#### Demo seed data (`backend/scripts/seed_tasks.py`)
+
+```bash
+cd backend
+uv run python -m scripts.seed_tasks
+```
+
+Seeds 5 realistic tasks: unpack reagents (in_progress), organize freezer (todo), verify pipettes (todo/student), upload SOP (completed), label cabinet (blocked/overdue).
+
+#### Backend API (`backend/app/api/v1/tasks/`)
+
+| Method | Endpoint | Access | Notes |
+|---|---|---|---|
+| `GET` | `/tasks/` | all roles | Filter by status, priority, assigned_to |
+| `POST` | `/tasks/` | `assign_tasks` (PI + Researcher) | |
+| `GET` | `/tasks/{id}` | all roles | |
+| `PATCH` | `/tasks/{id}` | PI + Researcher | Full metadata update |
+| `DELETE` | `/tasks/{id}` | PI only | |
+| `PATCH` | `/tasks/{id}/status` | PI + Researcher, or own assigned task | Students can only update their own |
+| `GET` | `/tasks/{id}/activity` | all roles | |
+| `GET` | `/auth/members` | all roles | Returns `id, full_name, role` for lab members |
+
+#### Frontend architecture
+
+**Data hook** — `useTasks()` fetches tasks and lab members in parallel. Exposes `createTask`, `updateTask`, `updateStatus`, `deleteTask`, `fetchActivity`.
+
+**Component tree:**
+```
+tasks/page.tsx             ← Kanban orchestrator, filters, overdue banner
+  TaskFilters              ← search + priority/type/assignee dropdowns
+  TaskKanban               ← 4 columns (Todo / In Progress / Blocked / Completed)
+    TaskCard               ← priority left-border accent, overdue date in red
+  TaskDrawer               ← right Sheet with status action buttons, activity log
+  TaskFormDialog           ← create/edit with priority, type, assignee, due date
+```
+
+**Dashboard additions:**
+- 3rd KPI card → "Open Tasks" (amber `urgent` flag when any task is overdue)
+- Action Queue: "Overdue Tasks" section (top priority) + "My Tasks" section
+
+#### Role behavior
+
+| Action | PI | Researcher | Student |
+|---|---|---|---|
+| View all tasks | ✅ | ✅ | ✅ |
+| Create task | ✅ | ✅ | ✗ |
+| Edit task | ✅ | ✅ | ✗ |
+| Update own task status | ✅ | ✅ | ✅ (own assigned only) |
+| Delete task | ✅ | ✗ | ✗ |
+
+---
+
+### Phase 5B — Incoming Package Intake + Vision AI
+
+The MVP signature feature. Upload a package photo, run GPT-4o Vision to extract metadata, review and confirm as a human, then create an inventory item or unpacking task — all in one drawer workflow.
+
+**Demo stability design:** Seeded packages use deterministic mocked extraction (no API calls, instant results). Real OpenAI Vision is available behind an explicit "Live AI" button so demo environments never break on missing keys or rate limits.
+
+#### Database schema (`supabase/migrations/005_incoming_packages.sql`)
+
+Two new tables + extended ai_audit_logs:
+
+| Table | Purpose |
+|---|---|
+| `incoming_packages` | Core intake record — image URL/path, all `extracted_*` fields, extraction status/mode/confidence, review status, linked inventory/task IDs |
+| `package_activity_logs` | Per-package timeline (uploaded, extracted, verified, rejected, inventory created, etc.) |
+
+`ai_audit_logs` extended with: `metadata jsonb`, `package_id uuid`, `tokens_used integer`.
+
+Enums: `package_review_status` (`pending`, `verified`, `rejected`, `manual_review`), `extraction_mode` (`mocked`, `live_ai`).
+
+#### Demo seed data (`backend/scripts/seed_packages.py`)
+
+```bash
+cd backend
+uv run python -m scripts.seed_packages
+```
+
+Seeds 5 packages with real demo images uploaded to Supabase Storage (`package-images/demo/`):
+
+| Package | Review Status | Extraction |
+|---|---|---|
+| Pipette Tips 1000μL | verified | mocked |
+| Ethanol 200 Proof | pending | mocked |
+| Conical Tubes 15mL | pending | mocked |
+| Anti-GFP Antibody | verified + processed | mocked |
+| Nitrile Gloves | pending | mocked |
+
+#### AI layer (`backend/app/ai/package_vision.py`)
+
+- **Mock extraction** — `mock_extract(image_url)`: URL-pattern keyed dict; deterministic, zero cost, used for all seeded packages.
+- **Live extraction** — `async live_extract(image_url)`: calls GPT-4o with `"detail": "low"` and a structured JSON prompt. Returns raw dict + `tokens_used`. Max 400 tokens per call.
+- OpenAI API key comes from `backend/.env` only — never exposed to the frontend.
+
+#### Backend API (`backend/app/api/v1/incoming_packages/`)
+
+| Method | Endpoint | Access | Notes |
+|---|---|---|---|
+| `GET` | `/incoming-packages/` | all roles | |
+| `POST` | `/incoming-packages/` | all roles | Multipart `UploadFile`; stores image in Supabase Storage; returns 1-year signed URL |
+| `GET` | `/incoming-packages/{id}` | all roles | |
+| `POST` | `/incoming-packages/{id}/extract` | all roles | `?mode=mocked` (default) or `?mode=live`; logs to `ai_audit_logs` with tokens + confidence |
+| `POST` | `/incoming-packages/{id}/verify` | PI + Researcher | Accepts editable field overrides |
+| `POST` | `/incoming-packages/{id}/reject` | PI + Researcher | |
+| `POST` | `/incoming-packages/{id}/create-inventory` | `manage_inventory` | Blocked if already linked; prefills from extracted fields |
+| `POST` | `/incoming-packages/{id}/create-task` | `assign_tasks` | Creates task with `task_type=package_intake`; blocked if already linked |
+| `POST` | `/incoming-packages/{id}/process` | PI + Researcher | Sets `processed_at` |
+| `GET` | `/incoming-packages/{id}/activity` | all roles | |
+
+#### Frontend architecture
+
+**API client addition** — `apiClient.postFile()` uses `isMultipart: true` flag to skip `Content-Type: application/json` so the browser sets the multipart boundary automatically.
+
+**Data hook** — `usePackages()` exposes: `uploadPackage`, `runExtraction`, `verifyExtraction`, `rejectExtraction`, `createInventory`, `createTask`, `markProcessed`, `fetchActivity`. Each method refreshes state and returns the updated package so the drawer stays in sync.
+
+**Component tree:**
+```
+incoming-packages/page.tsx     ← orchestrates all state + RBAC
+  PackageFilters               ← search + review_status + extraction_status dropdowns
+  PackageTable                 ← thumbnail, item name, uploader, badges, timeAgo
+    PackageReviewBadge         ← pending/verified/rejected/manual_review
+    ExtractionStatusBadge      ← pending/processing/completed/failed
+    ExtractionModeBadge        ← mocked (violet) / live_ai (teal)
+    ConfidenceBadge            ← high/medium/low confidence pill
+  PackageDrawer                ← 560px Sheet; activePanel state machine
+    null panel                 ← image preview + extraction summary
+    'review' panel             ← editable fields for all 7 extracted metadata fields
+    'inventory' panel          ← threshold / reorder_qty / notes form
+    'task' panel               ← title + assignee + priority + due date form
+  PackageUploadDialog          ← drag/drop + file browser; type+size validation; preview
+```
+
+**PackageDrawer footer button logic:**
+- "Run Extraction" (mocked) + "Live AI" → visible when extraction_status is `pending` or `failed`
+- "Verify Extraction" → visible when `completed` and not yet `verified`
+- "Add to Inventory" / "Create Task" → visible when `verified`, not yet processed, and not already linked
+- "Mark as Processed" → visible when both actions are done (or skipped)
+
+**Dashboard addition:**
+- 4th KPI card → "Incoming Packages" (count of packages with `review_status=pending` and `extraction_status=completed`; amber `urgent` flag when non-zero)
+
+#### Role behavior
+
+| Action | PI | Researcher | Student |
+|---|---|---|---|
+| Upload package image | ✅ | ✅ | ✅ |
+| Run extraction (mocked or live) | ✅ | ✅ | ✅ |
+| Verify / reject extraction | ✅ | ✅ | ✗ |
+| Create inventory from package | ✅ | ✅ (if `manage_inventory`) | ✗ |
+| Create task from package | ✅ | ✅ | ✗ |
+| Mark as processed | ✅ | ✅ | ✗ |
+
+#### Security constraints
+
+- `OPENAI_API_KEY` is in `backend/.env` only — never in any `NEXT_PUBLIC_*` variable
+- All OpenAI Vision calls happen on the backend only (`backend/app/ai/`)
+- `SUPABASE_SERVICE_ROLE_KEY` is backend-only — all Storage uploads go through the backend service
+- AI never creates inventory items or tasks autonomously — human confirmation required every time
+- Extraction is never triggered automatically on upload
 
 ---
 

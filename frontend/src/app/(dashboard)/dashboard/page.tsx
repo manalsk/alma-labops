@@ -2,13 +2,14 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { Clock, AlertTriangle, ListTodo, Package, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Clock, AlertTriangle, ListTodo, Inbox, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { hasPermission } from '@/lib/rbac';
 import { useProcurement } from '@/hooks/useProcurement';
 import { useInventory } from '@/hooks/useInventory';
 import { useTasks } from '@/hooks/useTasks';
+import { usePackages } from '@/hooks/usePackages';
 import { ProcurementStatusBadge } from '@/components/procurement/StatusBadge';
 import { UrgencyBadge } from '@/components/procurement/UrgencyBadge';
 import { PriorityBadge } from '@/components/tasks/PriorityBadge';
@@ -144,7 +145,8 @@ export default function DashboardPage() {
   const { requests, loading: procLoading } = useProcurement();
   const { items, loading: invLoading } = useInventory();
   const { tasks, loading: tasksLoading } = useTasks();
-  const loading = procLoading || invLoading || tasksLoading;
+  const { packages, loading: pkgLoading } = usePackages();
+  const loading = procLoading || invLoading || tasksLoading || pkgLoading;
 
   const canApprove = hasPermission(profile.role, 'approve_purchase_request', profile.permissions);
   const isStudent = profile.role === 'student';
@@ -172,6 +174,10 @@ export default function DashboardPage() {
   const overdueTasks = useMemo(
     () => tasks.filter((t) => t.due_date && t.status !== 'completed' && new Date(t.due_date) < new Date()),
     [tasks],
+  );
+  const pendingPackages = useMemo(
+    () => packages.filter((p) => p.review_status === 'pending' && p.extraction_status === 'completed'),
+    [packages],
   );
   const recentRequests = useMemo(
     () => [...requests]
@@ -229,13 +235,14 @@ export default function DashboardPage() {
           urgent={overdueTasks.length > 0}
         />
         <KpiCard
-          label="Inventory Items"
-          value={items.length}
-          icon={<Package className="w-4.5 h-4.5 text-teal-600" />}
+          label="Incoming Packages"
+          value={pendingPackages.length}
+          icon={<Inbox className="w-4.5 h-4.5 text-teal-600" />}
           bg="bg-teal-100"
-          textColor="text-teal-700"
+          textColor={pendingPackages.length > 0 ? 'text-teal-700' : 'text-slate-700'}
           loading={loading}
-          href="/inventory"
+          href="/incoming-packages"
+          urgent={pendingPackages.length > 0}
         />
       </div>
 

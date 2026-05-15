@@ -50,6 +50,9 @@ class AuditLogService:
         tool_called: str | None = None,
         response_summary: str | None = None,
         status: str = "success",
+        package_id: str | None = None,
+        tokens_used: int | None = None,
+        metadata: dict | None = None,
     ) -> dict:
         result = (
             self.db.table("ai_audit_logs")
@@ -63,6 +66,9 @@ class AuditLogService:
                     "response_summary": response_summary,
                     "status": status,
                     "lab_id": lab_id,
+                    "package_id": package_id,
+                    "tokens_used": tokens_used,
+                    "metadata": metadata,
                 }
             )
             .execute()

@@ -12,12 +12,12 @@ class APIError extends Error {
 
 async function request<T>(
   endpoint: string,
-  options: RequestInit & { token?: string } = {}
+  options: RequestInit & { token?: string; isMultipart?: boolean } = {}
 ): Promise<T> {
-  const { token, headers: extraHeaders, ...fetchOptions } = options;
+  const { token, headers: extraHeaders, isMultipart, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isMultipart ? {} : { 'Content-Type': 'application/json' }),
     ...(extraHeaders as Record<string, string>),
   };
 
@@ -31,7 +31,12 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    throw new APIError(response.status, `API error ${response.status}: ${response.statusText}`);
+    let detail = response.statusText;
+    try {
+      const body = await response.json();
+      if (body?.detail) detail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail);
+    } catch { /* non-JSON error body */ }
+    throw new APIError(response.status, `API error ${response.status}: ${detail}`);
   }
 
   if (response.status === 204 || response.headers.get('content-length') === '0') {
@@ -56,4 +61,8 @@ export const apiClient = {
 
   delete: <T>(endpoint: string, token?: string) =>
     request<T>(endpoint, { method: 'DELETE', token }),
+
+  // Multipart file upload — browser sets Content-Type with boundary automatically
+  postFile: <T>(endpoint: string, formData: FormData, token?: string) =>
+    request<T>(endpoint, { method: 'POST', body: formData, token, isMultipart: true }),
 };

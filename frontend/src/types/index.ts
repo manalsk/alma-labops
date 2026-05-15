@@ -208,20 +208,47 @@ export interface LabMember {
 // ─── Incoming Packages ────────────────────────────────────────────────────────
 
 export type ExtractionStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type ExtractionMode = 'mocked' | 'live_ai';
+export type PackageReviewStatus = 'pending' | 'verified' | 'rejected' | 'manual_review';
 
 export interface IncomingPackage {
   id: string;
-  image_url?: string;
-  tracking_number?: string;
-  extracted_item_name?: string;
-  extracted_vendor?: string;
-  extracted_quantity?: number;
-  extracted_catalog_number?: string;
-  extracted_category?: string;
-  extraction_status: ExtractionStatus;
-  is_verified: boolean;
-  inventory_item_id?: string;
   lab_id: string;
+  org_id: string;
+  image_url: string;
+  image_path: string | null;
+  uploaded_by: string;
+  uploaded_by_name: string;
+  extracted_item_name: string | null;
+  extracted_vendor: string | null;
+  extracted_quantity: number | null;
+  extracted_unit: string | null;
+  extracted_catalog_number: string | null;
+  extracted_category: string | null;
+  extracted_storage_condition: string | null;
+  extraction_confidence: string | null;
+  extraction_notes: string | null;
+  extraction_raw_json: Record<string, unknown> | null;
+  extraction_mode: ExtractionMode | null;
+  extraction_status: ExtractionStatus;
+  review_status: PackageReviewStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  linked_inventory_item_id: string | null;
+  linked_task_id: string | null;
+  processed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PackageActivityLog {
+  id: string;
+  package_id: string;
+  lab_id: string;
+  actor_id: string;
+  actor_name: string;
+  action: string;
+  notes: string | null;
   created_at: string;
 }
 

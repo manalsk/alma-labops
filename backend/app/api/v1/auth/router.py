@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_db
 from app.models.auth import CurrentUser, ProfileResponse
+from supabase import Client
 
 router = APIRouter()
 
@@ -20,3 +21,20 @@ async def get_me(current_user: CurrentUser = Depends(get_current_user)):
         is_active=current_user.is_active,
         created_at=current_user.created_at,
     )
+
+
+@router.get("/members")
+async def list_members(
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Client = Depends(get_db),
+):
+    """Return all active lab members — used for assignee dropdowns."""
+    result = (
+        db.table("profiles")
+        .select("id, full_name, role")
+        .eq("lab_id", current_user.lab_id)
+        .eq("is_active", True)
+        .order("full_name")
+        .execute()
+    )
+    return {"data": result.data or []}

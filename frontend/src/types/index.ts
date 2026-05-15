@@ -159,24 +159,50 @@ export interface PurchaseRequest {
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
-export type Priority = 'low' | 'medium' | 'high';
-
 export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'completed';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskType = 'operational' | 'lab_maintenance' | 'procurement' | 'onboarding' | 'package_intake' | 'other';
 
 export interface Task {
   id: string;
-  title: string;
-  description?: string;
-  status: TaskStatus;
-  priority: Priority;
-  assigned_to?: string;
-  assigned_to_name?: string;
-  due_date?: string;
-  is_ai_generated: boolean;
-  related_package_id?: string;
   lab_id: string;
+  org_id: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  task_type: TaskType;
+  assigned_to: string | null;
+  assigned_to_name: string | null;
+  created_by: string;
+  created_by_name: string;
+  due_date: string | null;
+  completed_at: string | null;
+  related_inventory_item_id: string | null;
+  related_purchase_request_id: string | null;
+  related_package_id: string | null;
+  ai_generated: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface TaskActivityLog {
+  id: string;
+  task_id: string;
+  lab_id: string;
+  actor_id: string;
+  actor_name: string;
+  action: string;
+  old_value: string | null;
+  new_value: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface LabMember {
+  id: string;
+  full_name: string;
+  role: Role;
 }
 
 // ─── Incoming Packages ────────────────────────────────────────────────────────

@@ -2,15 +2,17 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { Clock, AlertTriangle, ShoppingCart, Package, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Clock, AlertTriangle, ListTodo, Package, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { hasPermission } from '@/lib/rbac';
 import { useProcurement } from '@/hooks/useProcurement';
 import { useInventory } from '@/hooks/useInventory';
+import { useTasks } from '@/hooks/useTasks';
 import { ProcurementStatusBadge } from '@/components/procurement/StatusBadge';
 import { UrgencyBadge } from '@/components/procurement/UrgencyBadge';
-import type { PurchaseRequest } from '@/types';
+import { PriorityBadge } from '@/components/tasks/PriorityBadge';
+import type { PurchaseRequest, Task } from '@/types';
 import type { InventoryItem } from '@/types';
 
 function timeAgo(dateStr: string): string {
@@ -21,6 +23,11 @@ function timeAgo(dateStr: string): string {
   if (h < 24) return `${h}h ago`;
   const d = Math.floor(h / 24);
   return d < 30 ? `${d}d ago` : new Date(dateStr).toLocaleDateString();
+}
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function KpiCard({
@@ -111,21 +118,39 @@ function DraftRow({ req }: { req: PurchaseRequest }) {
   );
 }
 
+function TaskRow({ task }: { task: Task }) {
+  return (
+    <Link href="/tasks">
+      <div className="flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors group">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-slate-800 truncate">{task.title}</p>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {task.assigned_to_name ?? 'Unassigned'}
+            {task.due_date && (
+              <span className={`ml-1.5 ${new Date(task.due_date) < new Date() ? 'text-red-500 font-medium' : ''}`}>
+                · Due {formatDate(task.due_date)}
+              </span>
+            )}
+          </p>
+        </div>
+        <PriorityBadge priority={task.priority} />
+      </div>
+    </Link>
+  );
+}
+
 export default function DashboardPage() {
   const profile = useUserProfile();
   const { requests, loading: procLoading } = useProcurement();
   const { items, loading: invLoading } = useInventory();
-  const loading = procLoading || invLoading;
+  const { tasks, loading: tasksLoading } = useTasks();
+  const loading = procLoading || invLoading || tasksLoading;
 
   const canApprove = hasPermission(profile.role, 'approve_purchase_request', profile.permissions);
   const isStudent = profile.role === 'student';
 
   const pendingApprovals = useMemo(
     () => requests.filter((r) => r.status === 'pending_approval'),
-    [requests],
-  );
-  const orderedRequests = useMemo(
-    () => requests.filter((r) => r.status === 'ordered'),
     [requests],
   );
   const lowStockItems = useMemo(
@@ -135,6 +160,18 @@ export default function DashboardPage() {
   const myDrafts = useMemo(
     () => requests.filter((r) => r.status === 'draft' && r.requester_id === profile.id),
     [requests, profile.id],
+  );
+  const openTasks = useMemo(
+    () => tasks.filter((t) => t.status !== 'completed'),
+    [tasks],
+  );
+  const myTasks = useMemo(
+    () => tasks.filter((t) => t.assigned_to === profile.id && t.status !== 'completed'),
+    [tasks, profile.id],
+  );
+  const overdueTasks = useMemo(
+    () => tasks.filter((t) => t.due_date && t.status !== 'completed' && new Date(t.due_date) < new Date()),
+    [tasks],
   );
   const recentRequests = useMemo(
     () => [...requests]
@@ -146,7 +183,9 @@ export default function DashboardPage() {
   const hasActionItems =
     (canApprove && pendingApprovals.length > 0) ||
     lowStockItems.length > 0 ||
-    myDrafts.length > 0;
+    myDrafts.length > 0 ||
+    myTasks.length > 0 ||
+    overdueTasks.length > 0;
 
   return (
     <div className="space-y-6">
@@ -180,13 +219,14 @@ export default function DashboardPage() {
           href="/inventory"
         />
         <KpiCard
-          label="Orders In Transit"
-          value={orderedRequests.length}
-          icon={<ShoppingCart className="w-4.5 h-4.5 text-blue-600" />}
+          label="Open Tasks"
+          value={openTasks.length}
+          icon={<ListTodo className="w-4.5 h-4.5 text-blue-600" />}
           bg="bg-blue-100"
           textColor="text-blue-700"
           loading={loading}
-          href="/purchase-requests"
+          href="/tasks"
+          urgent={overdueTasks.length > 0}
         />
         <KpiCard
           label="Inventory Items"
@@ -226,6 +266,24 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-4">
+              {overdueTasks.length > 0 && (
+                <div>
+                  <SectionHeading>Overdue Tasks ({overdueTasks.length})</SectionHeading>
+                  <div className="-mx-1">
+                    {overdueTasks.slice(0, 3).map((task) => (
+                      <TaskRow key={task.id} task={task} />
+                    ))}
+                    {overdueTasks.length > 3 && (
+                      <Link href="/tasks">
+                        <p className="text-xs text-teal-600 hover:underline px-3 py-1.5">
+                          +{overdueTasks.length - 3} more
+                        </p>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {canApprove && pendingApprovals.length > 0 && (
                 <div>
                   <SectionHeading>Awaiting Approval ({pendingApprovals.length})</SectionHeading>
@@ -237,6 +295,24 @@ export default function DashboardPage() {
                       <Link href="/purchase-requests">
                         <p className="text-xs text-teal-600 hover:underline px-3 py-1.5">
                           +{pendingApprovals.length - 4} more
+                        </p>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {myTasks.length > 0 && (
+                <div>
+                  <SectionHeading>My Tasks ({myTasks.length})</SectionHeading>
+                  <div className="-mx-1">
+                    {myTasks.slice(0, 3).map((task) => (
+                      <TaskRow key={task.id} task={task} />
+                    ))}
+                    {myTasks.length > 3 && (
+                      <Link href="/tasks">
+                        <p className="text-xs text-teal-600 hover:underline px-3 py-1.5">
+                          +{myTasks.length - 3} more
                         </p>
                       </Link>
                     )}

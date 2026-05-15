@@ -33,6 +33,9 @@ backend/**/*.egg-info
 backend/.ruff_cache/
 backend/.mypy_cache/
 
+# ─── Private docs ─────────────────────────────────────────────────────────────
+docs/implementation_roadmap_alma_labops.md
+
 # ─── OS / Editor ──────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

@@ -6,13 +6,15 @@ ALMA LabOps is a platform designed to help research labs reduce operational fric
 
 ## Core Features
 
-- Inventory management with low-stock detection
+- Inventory management with low-stock detection and audit trail
 - Purchase request and approval workflows
-- AI-assisted package intake using computer vision
-- Role-based access control (PI, Researcher, Student)
-- Knowledge base with AI-powered SOP retrieval
-- Audit logging and operational traceability
-- Embedded AI copilot for operational assistance
+- AI-assisted package intake using computer vision (GPT-4o Vision)
+- Role-based access control (PI, Researcher, Student) with delegatable permissions
+- Knowledge base with AI-powered SOP retrieval (RAG)
+- Operational AI copilot grounded in live lab data
+- Dual audit log viewer (operational events + AI interactions)
+- Modular settings with PI-controlled permission delegation
+- Lightweight AI eval suite for both RAG and Copilot
 
 ---
 
@@ -22,7 +24,8 @@ ALMA LabOps is a platform designed to help research labs reduce operational fric
 alma-labops/
 ├── frontend/        Next.js 16 + TypeScript + TailwindCSS v4 + shadcn/ui
 ├── backend/         FastAPI + Python 3.12 + uv
-└── docs/            Product and UI specifications
+├── evals/           Manual AI eval cases (JSON)
+└── docs/            Product specs and implementation roadmap
 ```
 
 ### Frontend → Backend Communication
@@ -40,19 +43,28 @@ All AI code lives in `backend/app/ai/`:
 
 | Module | Purpose |
 |---|---|
-| `inventory_assistant.py` | Natural language inventory Q&A |
-| `procurement_assistant.py` | Duplicate detection for purchase requests |
-| `package_vision.py` | GPT-4o Vision metadata extraction from package images |
-| `rag_assistant.py` | RAG Q&A grounded on knowledge base documents |
+| `package_vision.py` | GPT-4o Vision — extracts metadata from package photos |
+| `rag_assistant.py` | RAG Q&A grounded exclusively on approved KB documents |
+| `copilot.py` | Operational Q&A grounded in live lab data (inventory, tasks, procurement) |
 
-AI never mutates database state directly — it always returns structured suggestions that humans confirm before the backend applies them.
+Security constraints enforced across all AI modules:
+- `OPENAI_API_KEY` stored in `backend/.env` only — never in any `NEXT_PUBLIC_*` variable
+- All OpenAI calls happen on the backend only
+- AI never writes to the database — suggestions require human confirmation
+- OpenAI calls are only triggered by explicit user action (submit button / suggested prompt)
 
 ### RBAC
 
-Roles: `pi`, `researcher`, `student`. Extra per-user permissions allow Researchers to be elevated to "Operations Researcher" without a separate role.
+Three roles: `pi`, `researcher`, `student`. Extra per-user permissions allow researchers to be granted elevated access without a separate role.
 
-- **Frontend**: `src/lib/rbac.ts` — visibility and conditional rendering.
+- **Frontend**: `src/lib/rbac.ts` — `hasPermission()` for visibility and conditional rendering.
 - **Backend**: `app/middleware/rbac.py` — `require_permission()` enforced per endpoint.
+
+Delegatable permissions (PI can grant to researchers via Settings → Team):
+
+| Permission | Description |
+|---|---|
+| `view_audit_logs` | Read access to operational and AI audit logs |
 
 ---
 
@@ -63,9 +75,9 @@ Roles: `pi`, `researcher`, `student`. Extra per-user permissions allow Researche
 | Frontend | Next.js 16, TypeScript, TailwindCSS v4, shadcn/ui |
 | Backend | FastAPI, Python 3.12, uv |
 | Database | Supabase (PostgreSQL + pgvector) |
-| Auth | Supabase Auth |
+| Auth | Supabase Auth (JWT) |
 | Storage | Supabase Storage |
-| AI | OpenAI SDK (GPT-4.1, GPT-4o, text-embedding-3-small) |
+| AI | OpenAI SDK (GPT-4.1-mini, GPT-4o Vision, text-embedding-3-small) |
 | Deployment | Vercel (frontend) + Render/Railway (backend) |
 
 ---
@@ -93,15 +105,59 @@ uv run uvicorn app.main:app --reload --port 8000
 # Health: http://localhost:8000/health
 ```
 
+### Database migrations
+
+Apply migrations in order via the Supabase SQL Editor:
+
+```
+supabase/migrations/001_schema.sql
+supabase/migrations/002_inventory.sql
+supabase/migrations/003_procurement.sql
+supabase/migrations/004_tasks.sql
+supabase/migrations/005_incoming_packages.sql
+supabase/migrations/006_knowledge_base.sql
+supabase/migrations/007_copilot.sql
+supabase/migrations/008_permissions_catalog.sql
+```
+
+### Seed demo data
+
+Run each seed script once after migrations:
+
+```bash
+cd backend
+uv run python -m scripts.seed_users
+uv run python -m scripts.seed_inventory
+uv run python -m scripts.seed_procurement
+uv run python -m scripts.seed_tasks
+uv run python -m scripts.seed_packages
+uv run python -m scripts.seed_knowledge_base
+```
+
+Demo accounts (password: `demo1234`):
+
+| Email | Name | Role |
+|---|---|---|
+| `pi@demo.alma.lab` | Dr. Sarah Chen | PI |
+| `researcher@demo.alma.lab` | Alex Rivera | Researcher |
+| `ops@demo.alma.lab` | Jordan Kim | Researcher (elevated) |
+| `student@demo.alma.lab` | Maya Patel | Student |
+
 ---
 
-## Development Phases
+## AI Evals
 
-- **Phase 1** (current): Architecture scaffold ✅
-- **Phase 2**: Auth, RBAC, Supabase schema, seeded demo users
-- **Phase 3**: Inventory management
-- **Phase 4**: Purchase request workflows
-- **Phase 5**: Package intake + Vision AI
-- **Phase 6**: Knowledge Base + RAG
-- **Phase 7**: Dashboard + AI copilot
-- **Phase 8**: Audit logs + Settings
+A lightweight manual eval suite lives in `evals/basic_ai_eval_cases.json` (15 cases across RAG and Copilot). Run it with:
+
+```bash
+cd backend
+
+uv run python -m scripts.run_basic_ai_evals           # all cases
+uv run python -m scripts.run_basic_ai_evals --system rag
+uv run python -m scripts.run_basic_ai_evals --system copilot
+uv run python -m scripts.run_basic_ai_evals --id cop_04
+```
+
+Requires `OPENAI_API_KEY` in `backend/.env`. Exit code 1 on any failure.
+
+---

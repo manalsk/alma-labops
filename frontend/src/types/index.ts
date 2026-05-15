@@ -12,7 +12,8 @@ export type Permission =
   | 'manage_locations'
   | 'manage_inventory'
   | 'manage_categories'
-  | 'assign_permissions';
+  | 'assign_permissions'
+  | 'view_audit_logs';
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 
@@ -203,6 +204,7 @@ export interface LabMember {
   id: string;
   full_name: string;
   role: Role;
+  permissions?: string[];
 }
 
 // ─── Incoming Packages ────────────────────────────────────────────────────────
@@ -334,6 +336,22 @@ export interface AuditLog {
   description: string;
   metadata?: Record<string, unknown>;
   lab_id: string;
+  created_at: string;
+}
+
+export interface AIAuditLog {
+  id: string;
+  user_id: string | null;
+  user_role: string | null;
+  prompt: string;
+  tool_called: string | null;
+  model_used: string;
+  response_summary: string | null;
+  status: 'success' | 'error' | 'blocked';
+  lab_id: string;
+  package_id: string | null;
+  tokens_used: number | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 }
 

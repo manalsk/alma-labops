@@ -15,6 +15,7 @@ ROLE_BASE_PERMISSIONS: dict[str, list[str]] = {
         "assign_permissions",
     ],
     "researcher": ["assign_tasks", "manage_inventory"],
+    # view_audit_logs can be delegated to researchers by the PI via user_permissions
     "student": [],
 }
 

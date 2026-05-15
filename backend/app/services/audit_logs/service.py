@@ -75,22 +75,70 @@ class AuditLogService:
         )
         return result.data[0]
 
-    def list_logs(self, *, lab_id: str, limit: int = 50, offset: int = 0) -> list[dict]:
-        result = (
+    def list_logs(
+        self,
+        *,
+        lab_id: str,
+        limit: int = 50,
+        offset: int = 0,
+        event_type: str | None = None,
+        actor_role: str | None = None,
+        resource_type: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        search: str | None = None,
+    ) -> list[dict]:
+        query = (
             self.db.table("audit_logs")
             .select("*")
             .eq("lab_id", lab_id)
+        )
+        if event_type:
+            query = query.eq("event_type", event_type)
+        if actor_role:
+            query = query.eq("actor_role", actor_role)
+        if resource_type:
+            query = query.eq("resource_type", resource_type)
+        if start_date:
+            query = query.gte("created_at", start_date)
+        if end_date:
+            query = query.lte("created_at", end_date)
+        if search:
+            query = query.ilike("description", f"%{search}%")
+        result = (
+            query
             .order("created_at", desc=True)
             .range(offset, offset + limit - 1)
             .execute()
         )
         return result.data or []
 
-    def list_ai_logs(self, *, lab_id: str, limit: int = 50, offset: int = 0) -> list[dict]:
-        result = (
+    def list_ai_logs(
+        self,
+        *,
+        lab_id: str,
+        limit: int = 50,
+        offset: int = 0,
+        tool_called: str | None = None,
+        status: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> list[dict]:
+        query = (
             self.db.table("ai_audit_logs")
             .select("*")
             .eq("lab_id", lab_id)
+        )
+        if tool_called:
+            query = query.eq("tool_called", tool_called)
+        if status:
+            query = query.eq("status", status)
+        if start_date:
+            query = query.gte("created_at", start_date)
+        if end_date:
+            query = query.lte("created_at", end_date)
+        result = (
+            query
             .order("created_at", desc=True)
             .range(offset, offset + limit - 1)
             .execute()

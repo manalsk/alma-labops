@@ -125,7 +125,7 @@ export function PackageDrawer({
 
     // Pre-fill task title
     setTaskTitle(pkg.extracted_item_name ? `Unpack and store: ${pkg.extracted_item_name}` : '');
-  }, [pkg?.id, open]);
+  }, [pkg?.id, open, pkg?.extraction_status]);
 
   if (!pkg) return null;
 

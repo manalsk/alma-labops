@@ -634,8 +634,43 @@ Constrained RAG assistant grounded exclusively in approved lab KB documents. No 
 
 ---
 
-## Phase 7 — Dashboard + AI Copilot
+## Phase 7 — Dashboard + Operational AI Copilot
+
+**Status:** Complete
+
+### Overview
+Globally accessible constrained AI copilot grounded in live lab data. Two AI systems coexist and cross-redirect:
+- **KB Assistant** (Phase 6) — document-grounded only, redirects operational questions to Copilot
+- **Operational Copilot** (Phase 7) — live data-grounded, redirects SOP/policy questions to KB Assistant
+
+No automatic OpenAI calls — API calls happen only when user explicitly submits a question.
+
+### Backend files
+- `supabase/migrations/007_copilot.sql` — `copilot_queries` audit table with RLS
+- `backend/app/ai/copilot.py` — 10-rule constrained system prompt, injection guard, KB redirect rule
+- `backend/app/services/copilot/service.py` — RBAC-aware context builder; `ask()` pipeline
+- `backend/app/api/v1/copilot/router.py` — `POST /copilot/ask`
+
+### RBAC context rules
+- **All roles**: full inventory + low-stock list
+- **Student**: their assigned tasks only; no procurement, no audit log
+- **Researcher + PI**: all tasks, pending packages, procurement queue, recent activity
+
+### Frontend files
+- `CopilotPanel.tsx` — floating "Ask ALMA" button + right-side slide-over; role-specific prompts; hidden on `/knowledge-base`
+- `AppLayout.tsx` updated — copilot injected into app shell
+- Dashboard — "Package Reviews Needed" added to action queue
+
+### What to test
+1. Apply `007_copilot.sql` in Supabase SQL Editor
+2. Restart backend — `POST /api/v1/copilot/ask` appears in docs
+3. "Ask ALMA" button appears bottom-right on all pages except Knowledge Base
+4. Ask "Which items are low stock?" → lists actual inventory
+5. Ask "What is the weather?" → refusal phrase
+6. Ask "How do I dispose biohazard waste?" → redirects to KB Assistant
+7. Log in as student → ask "What purchase requests are pending?" → refuses (no procurement context)
+8. Check `copilot_queries` table in Supabase for logged entries
 
 ---
 
-## Phase 8 — Audit Logs + Settings
+## Phase 8 — Audit Logs + Settings + Evals

@@ -303,6 +303,24 @@ export interface RAGResponse {
   query_id: string;
 }
 
+// ─── Operational Copilot ──────────────────────────────────────────────────────
+
+export interface CopilotResponse {
+  answer: string;
+  was_refused: boolean;
+  context_sources: string[];
+  tokens_used: number | null;
+}
+
+export interface CopilotMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  was_refused?: boolean;
+  context_sources?: string[];
+  tokens_used?: number | null;
+}
+
 // ─── Audit Logs ───────────────────────────────────────────────────────────────
 
 export interface AuditLog {

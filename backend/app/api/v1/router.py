@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.auth.router import router as auth_router
 from app.api.v1.audit_logs.router import router as audit_logs_router
+from app.api.v1.copilot.router import router as copilot_router
 from app.api.v1.incoming_packages.router import router as incoming_packages_router
 from app.api.v1.inventory.router import router as inventory_router
 from app.api.v1.knowledge_base.router import router as knowledge_base_router
@@ -28,4 +29,5 @@ router.include_router(
     prefix="/knowledge-base",
     tags=["knowledge-base"],
 )
+router.include_router(copilot_router, prefix="/copilot", tags=["copilot"])
 router.include_router(audit_logs_router, prefix="/audit-logs", tags=["audit-logs"])

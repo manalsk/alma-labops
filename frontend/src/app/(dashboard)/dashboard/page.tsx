@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { Clock, AlertTriangle, ListTodo, Inbox, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Clock, AlertTriangle, ListTodo, Inbox, ChevronRight, CheckCircle2, Package } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { hasPermission } from '@/lib/rbac';
@@ -13,7 +13,7 @@ import { usePackages } from '@/hooks/usePackages';
 import { ProcurementStatusBadge } from '@/components/procurement/StatusBadge';
 import { UrgencyBadge } from '@/components/procurement/UrgencyBadge';
 import { PriorityBadge } from '@/components/tasks/PriorityBadge';
-import type { PurchaseRequest, Task } from '@/types';
+import type { PurchaseRequest, Task, IncomingPackage } from '@/types';
 import type { InventoryItem } from '@/types';
 
 function timeAgo(dateStr: string): string {
@@ -105,6 +105,25 @@ function ReorderRow({ item }: { item: InventoryItem }) {
   );
 }
 
+function PackageRow({ pkg }: { pkg: IncomingPackage }) {
+  return (
+    <Link href="/incoming-packages">
+      <div className="flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors group">
+        <Package className="w-4 h-4 text-slate-300 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-slate-800 truncate">
+            {pkg.extracted_item_name ?? 'Package pending review'}
+          </p>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {pkg.extracted_vendor ?? 'Unknown vendor'} · {pkg.uploaded_by_name}
+          </p>
+        </div>
+        <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-400 shrink-0" />
+      </div>
+    </Link>
+  );
+}
+
 function DraftRow({ req }: { req: PurchaseRequest }) {
   return (
     <Link href="/purchase-requests">
@@ -149,6 +168,7 @@ export default function DashboardPage() {
   const loading = procLoading || invLoading || tasksLoading || pkgLoading;
 
   const canApprove = hasPermission(profile.role, 'approve_purchase_request', profile.permissions);
+  const canVerify = profile.role === 'pi' || profile.role === 'researcher';
   const isStudent = profile.role === 'student';
 
   const pendingApprovals = useMemo(
@@ -191,7 +211,8 @@ export default function DashboardPage() {
     lowStockItems.length > 0 ||
     myDrafts.length > 0 ||
     myTasks.length > 0 ||
-    overdueTasks.length > 0;
+    overdueTasks.length > 0 ||
+    (canVerify && pendingPackages.length > 0);
 
   return (
     <div className="space-y-6">
@@ -338,6 +359,24 @@ export default function DashboardPage() {
                       <Link href="/inventory">
                         <p className="text-xs text-teal-600 hover:underline px-3 py-1.5">
                           +{lowStockItems.length - 4} more in inventory
+                        </p>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {canVerify && pendingPackages.length > 0 && (
+                <div>
+                  <SectionHeading>Package Reviews Needed ({pendingPackages.length})</SectionHeading>
+                  <div className="-mx-1">
+                    {pendingPackages.slice(0, 3).map((pkg) => (
+                      <PackageRow key={pkg.id} pkg={pkg} />
+                    ))}
+                    {pendingPackages.length > 3 && (
+                      <Link href="/incoming-packages">
+                        <p className="text-xs text-teal-600 hover:underline px-3 py-1.5">
+                          +{pendingPackages.length - 3} more packages
                         </p>
                       </Link>
                     )}

@@ -161,3 +161,23 @@ uv run python -m scripts.run_basic_ai_evals --id cop_04
 Requires `OPENAI_API_KEY` in `backend/.env`. Exit code 1 on any failure.
 
 ---
+
+## Demo Video
+
+Google Drive Demo Walkthrough:
+
+https://drive.google.com/file/d/1SHe1bPswaNMbcMZKSGPnd3OMI8VafA2a/view?usp=sharing
+
+The demo showcases:
+
+- RBAC workflows
+
+- inventory management
+
+- package intake with Vision AI
+
+- constrained RAG assistant
+
+- operational AI copilot
+
+- audit logging

@@ -254,18 +254,53 @@ export interface PackageActivityLog {
 
 // ─── Knowledge Base ───────────────────────────────────────────────────────────
 
-export type KBCategory = 'sop' | 'onboarding' | 'safety' | 'equipment' | 'policy';
+export type KBVisibility = 'all_lab_members' | 'researchers_only' | 'pi_only';
+export type KBCategory = 'sop' | 'onboarding' | 'safety' | 'equipment' | 'policy' | 'general';
 
 export interface KBDocument {
   id: string;
-  title: string;
-  category: KBCategory;
-  file_url: string;
-  file_type: string;
-  uploaded_by: string;
-  is_indexed: boolean;
   lab_id: string;
+  title: string;
+  category: KBCategory | string;
+  file_url: string;
+  file_path: string | null;
+  file_type: string;
+  uploaded_by: string | null;
+  uploaded_by_name: string | null;
+  is_indexed: boolean;
+  chunk_count: number;
+  visibility: KBVisibility;
   created_at: string;
+  updated_at: string;
+}
+
+export interface RAGSource {
+  document_title: string;
+  chunk_index: number;
+  excerpt: string;
+  similarity: number;
+}
+
+export interface RAGQuery {
+  id: string;
+  lab_id: string;
+  user_id: string | null;
+  user_role: string;
+  question: string;
+  answer: string | null;
+  sources: RAGSource[];
+  was_refused: boolean;
+  model_used: string | null;
+  tokens_used: number | null;
+  created_at: string;
+}
+
+export interface RAGResponse {
+  answer: string;
+  was_refused: boolean;
+  sources: RAGSource[];
+  tokens_used: number | null;
+  query_id: string;
 }
 
 // ─── Audit Logs ───────────────────────────────────────────────────────────────

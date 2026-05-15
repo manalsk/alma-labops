@@ -583,6 +583,55 @@ incoming-packages/page.tsx     ← orchestrates all state + RBAC
 
 ## Phase 6 — Knowledge Base + RAG
 
+**Status:** Complete
+
+### Overview
+Constrained RAG assistant grounded exclusively in approved lab KB documents. No general-knowledge fallback — explicit refusal when no relevant context is retrieved.
+
+### Security constraints enforced
+- `OPENAI_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` backend-only; never exposed to frontend
+- All OpenAI calls (`text-embedding-3-small` embeddings, `gpt-4.1-mini` completion) happen in `backend/app/ai/`
+- RAG answers only from retrieved KB chunks — system prompt has 8 strict rules
+- Prompt injection resistance: `_INJECTION_GUARD` prefixed before context block; chunks wrapped as numbered read-only sections
+- RBAC visibility enforced both at retrieval (pgvector RPC) and document listing
+
+### Backend files
+- `supabase/migrations/006_knowledge_base.sql` — `document_visibility` enum, `kb_documents`, `document_chunks` (vector(1536)), `rag_queries` tables; IVFFlat index (cosine, lists=5); RLS; `search_kb_chunks` RPC accepting `float8[]`
+- `backend/app/ai/rag_assistant.py` — `VISIBILITY_BY_ROLE`, `REFUSAL_PHRASE`, 8-rule system prompt, injection guard, `generate_embedding()` (text-embedding-3-small), `answer_question()` (gpt-4.1-mini, temp=0)
+- `backend/app/services/knowledge_base/service.py` — `_chunk_markdown()` (paragraph splitter, 800 char max), `KnowledgeBaseService` (list, upload, ingest, RBAC search, RAG log)
+- `backend/app/api/v1/knowledge_base/router.py` — `GET /`, `POST /`, `GET /queries`, `POST /ask`, `GET /{id}`, `POST /{id}/ingest`, `DELETE /{id}`
+- `backend/scripts/seed_knowledge_base.py` — upload + embed all 7 demo docs
+
+### Frontend files
+- `frontend/src/types/index.ts` — `KBVisibility`, `KBDocument` (expanded), `RAGSource`, `RAGQuery`, `RAGResponse`
+- `frontend/src/hooks/useKnowledgeBase.ts` — upload, delete, reingest, ask, fetchQueries
+- `frontend/src/components/knowledge-base/KBVisibilityBadge.tsx` — color-coded visibility chip
+- `frontend/src/components/knowledge-base/KBDocumentTable.tsx` — doc list with index status, actions
+- `frontend/src/components/knowledge-base/KBUploadDialog.tsx` — file + metadata upload form
+- `frontend/src/components/knowledge-base/RAGPanel.tsx` — chat UI with source disclosure
+- `frontend/src/app/(dashboard)/knowledge-base/page.tsx` — two-column layout (doc list + RAG panel)
+
+### Demo KB document visibility
+| File | Visibility |
+|---|---|
+| onboarding-new-student-lab-guide.md | all_lab_members |
+| sop-biohazard-waste-disposal.md | all_lab_members |
+| sop-cold-storage-and-freezer-inventory.md | all_lab_members |
+| sop-package-intake-and-inventory-update.md | all_lab_members |
+| sop-procurement-request-policy.md | all_lab_members |
+| procurement-budget-policy-restricted.md | researchers_only |
+| lab-admin-security-policy.md | pi_only |
+
+### How to test
+1. Apply migration `006_knowledge_base.sql` in Supabase SQL Editor
+2. Create storage bucket `kb-documents` (private) in Supabase Storage
+3. Run seed: `cd backend && uv run python -m scripts.seed_knowledge_base`
+4. Navigate to `/knowledge-base` — documents appear in table
+5. Ask the RAG assistant "How do I dispose of biohazard waste?" — should answer from SOP
+6. Ask something off-topic (e.g. "What's the weather?") — should return refusal phrase
+7. Log in as student — `researchers_only` and `pi_only` docs should not appear
+8. Log in as researcher — `researchers_only` docs should appear; `pi_only` should not
+
 ---
 
 ## Phase 7 — Dashboard + AI Copilot

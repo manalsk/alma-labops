@@ -39,7 +39,11 @@ export default function InventoryPage() {
   const filtered = useMemo(() => {
     return items.filter((item) => {
       if (search && !item.name.toLowerCase().includes(search.toLowerCase())) return false;
-      if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+      if (statusFilter === 'needs_attention') {
+        if (item.status !== 'low_stock' && item.status !== 'out_of_stock') return false;
+      } else if (statusFilter !== 'all' && item.status !== statusFilter) {
+        return false;
+      }
       if (categoryId !== 'all' && item.category_id !== categoryId) return false;
       if (locationId !== 'all' && item.location_id !== locationId) return false;
       return true;
@@ -129,10 +133,10 @@ export default function InventoryPage() {
           </p>
           <button
             type="button"
-            onClick={() => setStatusFilter(statusFilter === 'all' ? 'low_stock' : 'all')}
+            onClick={() => setStatusFilter(statusFilter === 'needs_attention' ? 'all' : 'needs_attention')}
             className="ml-auto text-xs font-medium text-amber-700 hover:text-amber-900 underline underline-offset-2"
           >
-            {statusFilter === 'all' ? 'Show only' : 'Show all'}
+            {statusFilter === 'needs_attention' ? 'Show all' : 'Show only'}
           </button>
         </div>
       )}

@@ -82,39 +82,84 @@ export interface InventoryActivityLog {
 // ─── Purchase Requests ────────────────────────────────────────────────────────
 
 export type PurchaseRequestStatus =
-  | 'pending'
+  | 'draft'
+  | 'pending_approval'
   | 'approved'
   | 'rejected'
-  | 'clarification_needed';
+  | 'ordered'
+  | 'received';
 
-export type Priority = 'low' | 'medium' | 'high';
+export type PurchaseRequestUrgency = 'low' | 'normal' | 'high' | 'critical';
 
-export type AIFlagType = 'duplicate' | 'in_stock' | 'vendor_warning' | 'low_priority';
+export interface Vendor {
+  id: string;
+  lab_id: string;
+  name: string;
+  contact_name: string | null;
+  contact_email: string | null;
+  website: string | null;
+  notes: string | null;
+}
 
-export interface AIFlag {
-  type: AIFlagType;
-  message: string;
+export interface PurchaseRequestItem {
+  id: string;
+  request_id: string;
+  inventory_item_id: string | null;
+  item_name: string;
+  quantity: number;
+  unit: string;
+  catalog_number: string | null;
+  vendor: string | null;
+  estimated_unit_price: number | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface ProcurementActivityLog {
+  id: string;
+  request_id: string;
+  actor_id: string | null;
+  actor_name: string | null;
+  action: 'created' | 'submitted' | 'approved' | 'rejected' | 'clarification_requested' | 'ordered' | 'received' | 'edited';
+  old_status: string | null;
+  new_status: string | null;
+  notes: string | null;
+  created_at: string;
 }
 
 export interface PurchaseRequest {
   id: string;
-  item_name: string;
-  quantity: number;
-  unit: string;
-  vendor?: string;
-  estimated_cost?: number;
-  justification: string;
-  status: PurchaseRequestStatus;
-  priority: Priority;
-  requester_id: string;
-  requester_name?: string;
-  ai_flags?: AIFlag[];
   lab_id: string;
+  title: string;
+  description: string | null;
+  requester_id: string;
+  requester_name: string;
+  status: PurchaseRequestStatus;
+  urgency: PurchaseRequestUrgency;
+  vendor_id: string | null;
+  vendor_name: string | null;
+  estimated_total: number | null;
+  notes: string | null;
+  is_suggestion: boolean;
+  approved_by: string | null;
+  approver_name: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
+  rejection_reason: string | null;
+  clarification_note: string | null;
+  clarification_requested_at: string | null;
+  ordered_at: string | null;
+  received_at: string | null;
   created_at: string;
   updated_at: string;
+  // Joined fields
+  item_count?: number;
+  items?: PurchaseRequestItem[];
 }
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
+
+export type Priority = 'low' | 'medium' | 'high';
 
 export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'completed';
 

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Edit2, Trash2, Hash, Building2, MapPin, Tag, FileText } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { X, Edit2, Trash2, Hash, Building2, MapPin, Tag, FileText, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -49,6 +50,7 @@ export function InventoryDrawer({
   canDelete,
   fetchActivity,
 }: InventoryDrawerProps) {
+  const router = useRouter();
   const [activity, setActivity] = useState<InventoryActivityLog[]>([]);
   const [activityLoading, setActivityLoading] = useState(false);
 
@@ -193,38 +195,54 @@ export function InventoryDrawer({
         </div>
 
         {/* Footer actions */}
-        {(canEdit || canDelete) && (
-          <div className="shrink-0 px-6 py-4 border-t border-slate-100 flex items-center gap-2">
-            {canEdit && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(item)}
-                  className="h-9 gap-1.5"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                  Edit
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => onUpdateQuantity(item)}
-                  className="h-9 bg-teal-600 hover:bg-teal-700 text-white"
-                >
-                  Update Quantity
-                </Button>
-              </>
-            )}
-            {canDelete && (
+        {((item.status === 'low_stock' || item.status === 'out_of_stock') || canEdit || canDelete) && (
+          <div className="shrink-0 px-6 py-4 border-t border-slate-100 space-y-2">
+            {(item.status === 'low_stock' || item.status === 'out_of_stock') && (
               <Button
-                variant="outline"
                 size="sm"
-                onClick={() => onDelete(item)}
-                className="h-9 ml-auto text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 gap-1.5"
+                onClick={() => router.push(
+                  `/purchase-requests?action=new&item_name=${encodeURIComponent(item.name)}&unit=${encodeURIComponent(item.unit)}`
+                )}
+                className="h-9 w-full bg-amber-600 hover:bg-amber-700 text-white gap-1.5"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                Delete
+                <ShoppingCart className="w-3.5 h-3.5" />
+                Reorder
               </Button>
+            )}
+            {(canEdit || canDelete) && (
+              <div className="flex items-center gap-2">
+                {canEdit && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit(item)}
+                      className="h-9 gap-1.5"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => onUpdateQuantity(item)}
+                      className="h-9 bg-teal-600 hover:bg-teal-700 text-white"
+                    >
+                      Update Quantity
+                    </Button>
+                  </>
+                )}
+                {canDelete && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onDelete(item)}
+                    className="h-9 ml-auto text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         )}

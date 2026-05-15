@@ -297,11 +297,112 @@ Students see the inventory table and drawer (read-only) but no action buttons ar
 
 ---
 
-## Phase 4 — Purchase Request Workflows
+## Phase 4 — Purchase Request & Procurement Workflows ✅
+
+### What was built
+
+A full enterprise procurement workflow with multi-item purchase requests, an approval pipeline, role-based access, inventory integration, activity timelines, and a live dashboard. All business logic enforced server-side; frontend RBAC only controls visibility.
+
+### Database schema (`supabase/migrations/003_procurement.sql`)
+
+Four new tables:
+
+| Table | Purpose |
+|---|---|
+| `vendors` | Lab-scoped vendor directory (name, contact, website) |
+| `purchase_requests` | Core request — title, status, urgency, requester, approver, estimated total, vendor |
+| `purchase_request_items` | Line items per request — name, qty, unit, catalog #, estimated unit price |
+| `procurement_activity_logs` | Per-request timeline (created, submitted, approved, rejected, etc.) |
+
+Status flow: `draft → pending_approval → approved → ordered → received` (also `rejected`).
+
+`estimated_total` is computed from items (qty × unit_price) and stored on the request row via a `_refresh_estimated_total()` helper called after any item change.
+
+### Demo seed data (`backend/scripts/seed_procurement.py`)
+
+Run after the migration:
+```bash
+cd backend
+uv run python -m scripts.seed_procurement
+```
+
+Seeds 3 vendors and 6 realistic requests:
+- Pipette Tips — pending approval (Alex Rivera)
+- Ethanol — approved (Jordan Kim)
+- Gloves — pending + clarification note (Jordan Kim)
+- PCR Mix — ordered (Dr. Chen)
+- Microscope Maintenance Contract — draft (Dr. Chen)
+- BSA Standard — student suggestion (Maya Patel)
+
+### Backend API (`backend/app/api/v1/purchase_requests/`)
+
+| Method | Endpoint | Access | Notes |
+|---|---|---|---|
+| `GET` | `/purchase-requests/vendors` | all roles | |
+| `GET` | `/purchase-requests/` | all roles | Filter by status, urgency, requester_id, vendor_id |
+| `POST` | `/purchase-requests/` | all roles | Students auto-submit as suggestions (`is_suggestion=True`) |
+| `GET` | `/purchase-requests/{id}` | all roles | Includes items list |
+| `PATCH` | `/purchase-requests/{id}` | PI or own draft/pending | |
+| `DELETE` | `/purchase-requests/{id}` | PI or own draft | |
+| `POST` | `/purchase-requests/{id}/submit` | own draft or PI | Draft → pending_approval |
+| `POST` | `/purchase-requests/{id}/approve` | `approve_purchase_request` | PI only |
+| `POST` | `/purchase-requests/{id}/reject` | `approve_purchase_request` | PI only |
+| `POST` | `/purchase-requests/{id}/clarification` | `approve_purchase_request` | PI only |
+| `POST` | `/purchase-requests/{id}/order` | `approve_purchase_request` | approved → ordered |
+| `POST` | `/purchase-requests/{id}/receive` | PI or Researcher | ordered → received |
+| `GET` | `/purchase-requests/{id}/activity` | all roles | Chronological timeline |
+
+### Procurement service (`backend/app/services/purchase_requests/service.py`)
+
+Every status transition:
+1. Validates the actor's permission and the request's current state
+2. Updates the `purchase_requests` row
+3. Writes a `procurement_activity_logs` entry (actor, action, old/new status, notes)
+4. Writes an `audit_logs` entry for the global audit trail
+
+Item count is fetched efficiently using a single query on `purchase_request_items` with `in_("request_id", ids)` + Python Counter — no N+1 queries.
+
+### Frontend architecture
+
+**Data hook** — `useProcurement()` fetches requests and vendors in parallel on mount. Exposes all CRUD and workflow actions; each refreshes state on success.
+
+**Component tree:**
+```
+purchase-requests/page.tsx     ← orchestrates all state + RBAC
+  ProcurementFilters           ← search + status/urgency/vendor dropdowns
+  ProcurementTable             ← row-per-request, violet "Suggestion" tag
+    ProcurementStatusBadge     ← 6-status colored pill
+    UrgencyBadge               ← low/normal/high/critical pill
+  ProcurementDrawer            ← right Sheet with metadata, items, activity
+  RequestFormDialog            ← multi-item create/edit; draft + submit buttons
+  ApprovalActionDialog         ← approve/reject/clarify with notes field
+```
+
+**Dashboard** — `dashboard/page.tsx` (client component) shows:
+- KPI cards: Pending Approvals, Low Stock Items, Orders In Transit, Inventory Items
+- Action Queue: pending approvals (PI), reorder suggestions for low-stock items, own drafts
+- Recent Requests: last 6 requests with status badge and requester
+
+**Inventory integration** — Low/out-of-stock items in `InventoryDrawer` show an amber "Reorder" button that navigates to `/purchase-requests?action=new&item_name=…&unit=…`. The purchase-requests page reads these URL params on mount and pre-fills the new request form.
+
+### Role behavior
+
+| Action | PI | Researcher | Student |
+|---|---|---|---|
+| View all requests | ✅ | ✅ | ✅ (own only in practice) |
+| Create request | ✅ | ✅ | ✅ (auto-submitted as suggestion) |
+| Save as draft | ✅ | ✅ | ✗ |
+| Submit for approval | ✅ | ✅ (own draft) | auto on create |
+| Edit pending request | ✅ | ✅ (own) | ✗ |
+| Approve / Reject / Clarify | ✅ | ✗ | ✗ |
+| Mark as Ordered | ✅ | ✗ | ✗ |
+| Mark as Received | ✅ | ✅ | ✗ |
+| Delete | ✅ | own draft only | ✗ |
+| View estimated totals | ✅ | ✗ | ✗ |
 
 ---
 
-## Phase 5 — Package Intake + Vision AI
+## Phase 5 — Tasks + Package Intake + Vision AI
 
 ---
 
